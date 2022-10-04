@@ -15,8 +15,7 @@ local ec = setmetatable({}, { __newindex = function(self, key, value)
 		end
 	end
 	updateableParameters[autoID] = update
-	callbacks[autoID] = info
-	EventCallbackData[autoID] = {maxn = 0}
+	EventCallbackData[autoID] = {maxn = 0, info = info}
 	EVENT_CALLBACK_LAST = autoID
 end})
 
@@ -54,6 +53,7 @@ ec.onLoseExperience = {[2] = 1}
 ec.onGainSkillTries = {[3] = 1}
 ec.onWrapItem = {}
 ec.onInventoryUpdate = {}
+ec.onNetworkMessage = {network={}}
 -- Monster
 ec.onDropLoot = {}
 ec.onSpawn = {}
@@ -69,21 +69,35 @@ EventCallback = {
 			end
 
 			local eventData = EventCallbackData[eventType]
+			if eventData.network then
+				eventData.network[tonumber(rawget(self, 'byte'))] = callback
+				return
+			end
+
 			eventData.maxn = #eventData + 1
 			eventData[eventData.maxn] = {
 				callback = callback,
+				bytes = rawget(self, 'bytes'),
 				triggerIndex = tonumber(triggerIndex) or 0
 			}
 			table.sort(eventData, function(ecl, ecr) return ecl.triggerIndex < ecr.triggerIndex end)
 			self.eventType = nil
 			self.callback = nil
+			self.bytes = nil
+		end
+	end,
+
+	recvByte = function(self, recvByte)
+		if isScriptsInterface() then
+			self.byte = recvByte
 		end
 	end,
 
 	clear = function(self)
 		EventCallbackData = {}
 		for i = 1, EVENT_CALLBACK_LAST do
-			EventCallbackData[i] = {maxn = 0}
+			local ecd = EventCallbackData[i]
+			EventCallbackData[i] = {maxn = 0, network=ecd.network and {}}
 		end
 	end
 }
@@ -120,16 +134,26 @@ setmetatable(EventCallback, {
 		end
 
 		local eventData = EventCallbackData[callback]
-		if eventData.maxn == 0 then
+		if eventData.network then
+			return function(...)
+				local args = pack(...)
+				local callback = eventData.network[args[2]]
+				if callback then
+					return callback(args[1], args[3])
+				end
+			end
+		end
+
+		local maxn = eventData.maxn
+		if maxn == 0 then
 			return
 		end
 
 		return function(...)
-			local results, args, info = {}, pack(...), callbacks[callback]
-			for index = 1, eventData.maxn do
-				local event = eventData[index]
+			local results, args, info = {}, pack(...), eventData.info
+			for index = 1, maxn do
 				repeat
-					results = {event.callback(unpack(args))}
+					results = {eventData[index].callback(unpack(args))}
 					local output = results[1]
 					-- If the call returns nil then we continue with the next call
 					if output == nil then
@@ -147,7 +171,7 @@ setmetatable(EventCallback, {
 						return output
 					end
 					-- We left the loop why have we reached the end
-					if index == eventData.maxn then
+					if index == maxn then
 						return unpack(results)
 					end
 				until true
