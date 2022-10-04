@@ -14,8 +14,9 @@ local ec = setmetatable({}, { __newindex = function(self, key, value)
 			update[k] = v
 		end
 	end
+	callbacks[autoID] = info
 	updateableParameters[autoID] = update
-	EventCallbackData[autoID] = {maxn = 0, info = info}
+	EventCallbackData[autoID] = {maxn = 0}
 	EVENT_CALLBACK_LAST = autoID
 end})
 
@@ -68,36 +69,36 @@ EventCallback = {
 				return
 			end
 
-			local eventData = EventCallbackData[eventType]
-			if eventData.network then
-				eventData.network[tonumber(rawget(self, 'byte'))] = callback
+			local network = callbacks[eventType].network
+			if network then
+				network[tonumber(rawget(self, 'recvbyte'))] = callback
 				return
 			end
 
+			local eventData = EventCallbackData[eventType]
 			eventData.maxn = #eventData + 1
 			eventData[eventData.maxn] = {
 				callback = callback,
-				bytes = rawget(self, 'bytes'),
+				recvbyte = rawget(self, 'recvbyte'),
 				triggerIndex = tonumber(triggerIndex) or 0
 			}
 			table.sort(eventData, function(ecl, ecr) return ecl.triggerIndex < ecr.triggerIndex end)
 			self.eventType = nil
 			self.callback = nil
-			self.bytes = nil
+			rawset(self, 'recvbyte', nil)
 		end
 	end,
 
 	recvByte = function(self, recvByte)
 		if isScriptsInterface() then
-			self.byte = recvByte
+			rawset(self, 'recvbyte', recvByte)
 		end
 	end,
 
 	clear = function(self)
 		EventCallbackData = {}
 		for i = 1, EVENT_CALLBACK_LAST do
-			local ecd = EventCallbackData[i]
-			EventCallbackData[i] = {maxn = 0, network=ecd.network and {}}
+			EventCallbackData[i] = {maxn = 0}
 		end
 	end
 }
@@ -133,24 +134,26 @@ setmetatable(EventCallback, {
 			return rawget(self, key)
 		end
 
-		local eventData = EventCallbackData[callback]
-		if eventData.network then
-			return function(...)
-				local args = pack(...)
-				local callback = eventData.network[args[2]]
+		local info = callbacks[callback]
+		-- NetworkMessage handle
+		if info.network then
+			return function(player, recvByte, msg)
+				local callback = info.network[recvByte]
 				if callback then
-					return callback(args[1], args[3])
+					return callback(player, msg)
 				end
+				io.write(string.format("Player: %s sent an unknown packet header: 0x%02X with %d bytes!\n", player:getName(), recvByte, msg:len()))
 			end
 		end
 
+		local eventData = EventCallbackData[callback]
 		local maxn = eventData.maxn
 		if maxn == 0 then
 			return
 		end
 
 		return function(...)
-			local results, args, info = {}, pack(...), eventData.info
+			local results, args = {}, pack(...)
 			for index = 1, maxn do
 				repeat
 					results = {eventData[index].callback(unpack(args))}

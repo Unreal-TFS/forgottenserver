@@ -331,7 +331,5 @@ end
 function Player:onNetworkMessage(recvByte, msg)
 	if EventCallback.onNetworkMessage then
 		EventCallback.onNetworkMessage(self, recvByte, msg)
-	else
-		io.write(string.format("Player: %s sent an unknown packet header: 0x%02X with %d bytes!\n", self:getName(), recvByte, msg:len()))
 	end
 end
