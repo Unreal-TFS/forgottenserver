@@ -614,6 +614,14 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result)
 		} while (result->next());
 	}
 
+	// load storage string map
+	if ((result = db.storeQuery(
+	         fmt::format("SELECT `key`, `value` FROM `player_storage_string` WHERE `player_id` = {:d}", player->getGUID())))) {
+		do {
+			player->setStorageString(result->getString("key"), result->getString("value"));
+		} while (result->next());
+	}
+
 	// load vip list
 	if ((result = db.storeQuery(fmt::format("SELECT `player_id` FROM `account_viplist` WHERE `account_id` = {:d}",
 	                                        player->getAccount())))) {
@@ -958,6 +966,22 @@ bool IOLoginData::savePlayer(Player* player)
 	}
 
 	if (!storageQuery.execute()) {
+		return false;
+	}
+
+	if (!db.executeQuery(fmt::format("DELETE FROM `player_storage_string` WHERE `player_id` = {:d}", player->getGUID()))) {
+		return false;
+	}
+
+	DBInsert storageStringQuery("INSERT INTO `player_storage_string` (`player_id`, `key`, `value`) VALUES ");
+
+	for (const auto& it : player->storageStringMap) {
+		if (!storageStringQuery.addRow(fmt::format("{:d}, {:s}, {:s}", player->getGUID(), db.escapeString(it.first), db.escapeString(it.second)))) {
+			return false;
+		}
+	}
+
+	if (!storageStringQuery.execute()) {
 		return false;
 	}
 

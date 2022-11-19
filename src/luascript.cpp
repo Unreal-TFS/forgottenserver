@@ -2623,6 +2623,9 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Player", "getStorageValue", LuaScriptInterface::luaPlayerGetStorageValue);
 	registerMethod("Player", "setStorageValue", LuaScriptInterface::luaPlayerSetStorageValue);
 
+	registerMethod("Player", "getStorageString", LuaScriptInterface::luaPlayerGetStorageString);
+	registerMethod("Player", "setStorageString", LuaScriptInterface::luaPlayerSetStorageString);
+
 	registerMethod("Player", "addItem", LuaScriptInterface::luaPlayerAddItem);
 	registerMethod("Player", "addItemEx", LuaScriptInterface::luaPlayerAddItemEx);
 	registerMethod("Player", "removeItem", LuaScriptInterface::luaPlayerRemoveItem);
@@ -9699,6 +9702,47 @@ int LuaScriptInterface::luaPlayerSetStorageValue(lua_State* L)
 	} else {
 		lua_pushnil(L);
 	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerGetStorageString(lua_State* L)
+{
+	// player:getStorageString(key)
+	Player* player = getUserdata<Player>(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	const std::string& key = getString(L, 2);
+	if (key.empty()) {
+		reportErrorFunc(L, "Invalid key value.");
+		lua_pushnil(L);
+		return 1;
+	}
+
+	pushString(L, player->getStorageString(key));
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerSetStorageString(lua_State* L)
+{
+	// player:setStorageString(key, value)
+	Player* player = getUserdata<Player>(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	const std::string& key = getString(L, 2);
+	if (key.empty()) {
+		reportErrorFunc(L, "Invalid key value.");
+		pushBoolean(L, false);
+		return 1;
+	}
+
+	player->setStorageString(key, getString(L, 3));
+	pushBoolean(L, true);
 	return 1;
 }
 

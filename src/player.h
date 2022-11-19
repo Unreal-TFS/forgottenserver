@@ -257,6 +257,23 @@ public:
 	bool getStorageValue(const uint32_t key, int32_t& value) const;
 	void genReservedStorageRange();
 
+	void setStorageString(const std::string& key, const std::string& value)
+	{
+		if (value.empty()) {
+			storageStringMap.erase(key);
+			return;
+		}
+		storageStringMap[key] = value;
+	}
+	const std::string& getStorageString(const std::string& key) const
+	{
+		auto it = storageStringMap.find(key);
+		if (it != storageStringMap.end()) {
+			return it->second;
+		}
+		return emptyString;
+	}
+
 	void setGroup(Group* newGroup) { group = newGroup; }
 	Group* getGroup() const { return group; }
 
@@ -1137,6 +1154,7 @@ public:
 	const std::map<uint8_t, OpenContainer>& getOpenContainers() const { return openContainers; }
 
 private:
+	static std::string emptyString;
 	std::forward_list<Condition*> getMuteConditions() const;
 
 	void checkTradeState(const Item* item);
@@ -1190,6 +1208,7 @@ private:
 	std::map<uint8_t, OpenContainer> openContainers;
 	std::map<uint32_t, DepotChest*> depotChests;
 	std::map<uint32_t, int32_t> storageMap;
+	std::unordered_map<std::string, std::string> storageStringMap;
 
 	std::vector<OutfitEntry> outfits;
 	GuildWarVector guildWarVector;

@@ -55,6 +55,24 @@ do
 		})
 	end
 
+	local json = require 'data/lib/json'
+
+	local function storageStringProxy(player)
+		return setmetatable({}, {
+			__index = function(self, key)
+				local string = player:getStorageString(key)
+				if string == "" then
+					return nil
+				end
+
+				return json.decode(string)
+			end,
+			__newindex = function(self, key, value)
+				player:setStorageString(key, json.encode(value))
+			end
+		})
+	end
+
 	local function accountStorageProxy(player)
 		return setmetatable({}, {
 			__index = function(self, key)
@@ -87,6 +105,10 @@ do
 		elseif key == "storage" then
 			if methods.isPlayer(self) then
 				return storageProxy(self)
+			end
+		elseif key == "storageString" then
+			if methods.isPlayer(self) then
+				return storageStringProxy(self)
 			end
 		elseif key == "accountStorage" then
 			if methods.isPlayer(self) then
