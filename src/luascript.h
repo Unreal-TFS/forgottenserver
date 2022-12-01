@@ -1469,6 +1469,8 @@ private:
 	static int luaSpellBlockWalls(lua_State* L);
 	static int luaSpellCheckFloor(lua_State* L);
 
+	static int luaSpellCast(lua_State* L);
+
 	// Actions
 	static int luaCreateAction(lua_State* L);
 	static int luaActionOnUse(lua_State* L);

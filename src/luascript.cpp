@@ -3183,6 +3183,8 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Spell", "blockWalls", LuaScriptInterface::luaSpellBlockWalls);
 	registerMethod("Spell", "checkFloor", LuaScriptInterface::luaSpellCheckFloor);
 
+	registerMethod("Spell", "cast", LuaScriptInterface::luaSpellCast);
+
 	// Action
 	registerClass("Action", "", LuaScriptInterface::luaCreateAction);
 	registerMethod("Action", "onUse", LuaScriptInterface::luaActionOnUse);
@@ -16467,6 +16469,38 @@ int LuaScriptInterface::luaSpellCheckFloor(lua_State* L)
 			spell->setCheckFloor(getBoolean(L, 2));
 			pushBoolean(L, true);
 		}
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaSpellCast(lua_State* L)
+{
+	// spell:cast(creature, target)
+	InstantSpell* spell = dynamic_cast<InstantSpell*>(getUserdata<Spell>(L, 1));
+	if (spell) {
+		// if spell != SPELL_INSTANT, it means that this actually is no InstantSpell, so we return nil
+		if (spell->spellType != SPELL_INSTANT) {
+			lua_pushnil(L);
+			return 1;
+		}
+
+		Creature* creature = getCreature(L, 2);
+		if (!creature) {
+			reportErrorFunc(L, getErrorDesc(LUA_ERROR_CREATURE_NOT_FOUND));
+			pushBoolean(L, false);
+			return 1;
+		}
+
+		Creature* target = getCreature(L, 3);
+		if (!target) {
+			reportErrorFunc(L, getErrorDesc(LUA_ERROR_CREATURE_NOT_FOUND));
+			pushBoolean(L, false);
+			return 1;
+		}
+
+		pushBoolean(L, spell->castSpell(creature, target));
 	} else {
 		lua_pushnil(L);
 	}
