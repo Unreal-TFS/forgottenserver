@@ -40,6 +40,7 @@ public:
 	};
 
 	NetworkMessage() = default;
+	NetworkMessage(const NetworkMessage& msg) { std::copy_n(msg.buffer.begin(), msg.getLength(), buffer.begin()); }
 
 	void reset() { info = {}; }
 

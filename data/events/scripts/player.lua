@@ -327,3 +327,9 @@ function Player:onInventoryUpdate(item, slot, equip)
 		EventCallback.onInventoryUpdate(self, item, slot, equip)
 	end
 end
+
+function Player:onNetworkMessage(recvByte, msg)
+	if EventCallback.onNetworkMessage then
+		return EventCallback.onNetworkMessage(self, recvByte, msg)
+	end
+end
