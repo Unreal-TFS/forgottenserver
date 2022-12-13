@@ -6189,10 +6189,15 @@ int LuaScriptInterface::luaNetworkMessageTell(lua_State* L)
 
 int LuaScriptInterface::luaNetworkMessageLength(lua_State* L)
 {
-	// networkMessage:len()
+	// networkMessage:len(len)
 	NetworkMessage* message = getUserdata<NetworkMessage>(L, 1);
 	if (message) {
-		lua_pushnumber(L, message->getLength());
+		if (lua_gettop(L) == 1) {
+			lua_pushnumber(L, message->getLength());
+		} else {
+			message->setLength(getNumber<uint16_t>(L, 2));
+			pushBoolean(L, true);
+		}
 	} else {
 		lua_pushnil(L);
 	}
