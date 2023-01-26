@@ -40,7 +40,7 @@ void NetworkMessage::addString(const std::string& value)
 	}
 
 	add<uint16_t>(stringLen);
-	std::memcpy(buffer.begin() + info.position, value.data(), stringLen);
+	std::copy_n(value.data(), stringLen, buffer.begin() + info.position);
 	info.position += stringLen;
 	info.length += stringLen;
 }
@@ -58,7 +58,7 @@ void NetworkMessage::addBytes(const char* bytes, size_t size)
 		return;
 	}
 
-	std::memcpy(buffer.begin() + info.position, bytes, size);
+	std::copy_n(bytes, size, buffer.begin() + info.position);
 	info.position += size;
 	info.length += size;
 }

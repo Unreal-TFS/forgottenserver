@@ -65,7 +65,7 @@ public:
 		}
 
 		T value;
-		std::memcpy(&value, buffer.begin() + info.position, sizeof(T));
+		std::copy_n(buffer.begin() + info.position, sizeof(T), &value);
 		info.position += sizeof(T);
 		return value;
 	}
@@ -94,7 +94,7 @@ public:
 			return;
 		}
 
-		std::memcpy(buffer.begin() + info.position, &value, sizeof(T));
+		std::copy_n(&value, sizeof(T), buffer.begin() + info.position);
 		info.position += sizeof(T);
 		info.length += sizeof(T);
 	}
