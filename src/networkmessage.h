@@ -56,18 +56,16 @@ public:
 	uint8_t getPreviousByte() { return buffer[--info.position]; }
 
 	template <typename T>
-	std::enable_if_t<std::is_trivially_copyable_v<T>, T> get() noexcept
+	T get()
 	{
-		static_assert(std::is_trivially_constructible_v<T>, "Destination type must be trivially constructible");
-
 		if (!canRead(sizeof(T))) {
 			return 0;
 		}
 
-		T value;
-		std::copy_n(buffer.begin() + info.position, sizeof(T), &value);
+		T v;
+		memcpy(&v, buffer + info.position, sizeof(T));
 		info.position += sizeof(T);
-		return value;
+		return v;
 	}
 
 	std::string getString(uint16_t stringLen = 0);
@@ -94,7 +92,7 @@ public:
 			return;
 		}
 
-		std::copy_n(&value, sizeof(T), buffer.begin() + info.position);
+		memcpy(buffer + info.position, &value, sizeof(T));
 		info.position += sizeof(T);
 		info.length += sizeof(T);
 	}
@@ -131,14 +129,14 @@ public:
 
 	bool isOverrun() const { return info.overrun; }
 
-	uint8_t* getBuffer() { return &buffer[0]; }
+	uint8_t* getBuffer() { return buffer; }
 
-	const uint8_t* getBuffer() const { return &buffer[0]; }
+	const uint8_t* getBuffer() const { return buffer; }
 
 	uint8_t* getBodyBuffer()
 	{
 		info.position = 2;
-		return &buffer[HEADER_LENGTH];
+		return buffer + HEADER_LENGTH;
 	}
 
 protected:
@@ -150,7 +148,7 @@ protected:
 	};
 
 	NetworkMessageInfo info;
-	std::array<uint8_t, NETWORKMESSAGE_MAXSIZE> buffer;
+	uint8_t buffer[NETWORKMESSAGE_MAXSIZE];
 
 private:
 	bool canAdd(size_t size) const { return (size + info.position) < MAX_BODY_LENGTH; }
