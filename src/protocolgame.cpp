@@ -846,9 +846,8 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 			// case 0xFE: break; // store window history 2
 
 		default:
-			g_dispatcher.addTask([=, playerID = player->getID(), msg = new NetworkMessage(msg)]() {
-				g_game.parsePlayerNetworkMessage(playerID, recvbyte, msg);
-			});
+			// std::cout << "Player: " << player->getName() << " sent an unknown packet header: 0x" << std::hex <<
+			// static_cast<uint16_t>(recvbyte) << std::dec << "!" << std::endl;
 			break;
 	}
 
