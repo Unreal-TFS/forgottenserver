@@ -2163,6 +2163,9 @@ void LuaScriptInterface::registerFunctions()
 	registerEnumIn("configKeys", ConfigManager::TWO_FACTOR_AUTH);
 	registerEnumIn("configKeys", ConfigManager::STAMINA_REGEN_MINUTE);
 	registerEnumIn("configKeys", ConfigManager::STAMINA_REGEN_PREMIUM);
+	registerEnumIn("configKeys", ConfigManager::MAGIC_WALL_ID);
+	registerEnumIn("configKeys", ConfigManager::MAGIC_WALL_STORAGE);
+	registerEnumIn("configKeys", ConfigManager::OLD_MAGIC_WALL_ID);
 
 	// os
 	registerMethod("os", "mtime", LuaScriptInterface::luaSystemTime);

@@ -277,6 +277,9 @@ bool ConfigManager::load()
 	integer[QUEST_TRACKER_PREMIUM_LIMIT] = getGlobalNumber(L, "questTrackerPremiumLimit", 15);
 	integer[STAMINA_REGEN_MINUTE] = getGlobalNumber(L, "timeToRegenMinuteStamina", 3 * 60);
 	integer[STAMINA_REGEN_PREMIUM] = getGlobalNumber(L, "timeToRegenMinutePremiumStamina", 10 * 60);
+	integer[MAGIC_WALL_ID] = getGlobalNumber(L, "magicWallId", 2129);
+	integer[OLD_MAGIC_WALL_ID] = getGlobalNumber(L, "oldMagicWallId", 2130);
+	integer[MAGIC_WALL_STORAGE] = getGlobalNumber(L, "magicWallStorage", 90000);
 
 	expStages = loadXMLStages();
 	if (expStages.empty()) {
