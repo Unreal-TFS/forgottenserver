@@ -4,11 +4,13 @@
 #ifndef FS_MONSTERS_H
 #define FS_MONSTERS_H
 
+#include "bestiary.h"
 #include "const.h"
 #include "enums.h"
 
 class ConditionDamage;
 class LuaScriptInterface;
+class Bestiary;
 
 const uint32_t MAX_LOOTCHANCE = 100000;
 
@@ -92,6 +94,19 @@ struct voiceBlock_t
 	bool yellText;
 };
 
+struct BestiaryInfo
+{
+	std::string className = "";
+	uint32_t raceId = 0;
+	uint32_t prowess = 0;
+	uint32_t expertise = 0;
+	uint32_t mastery = 0;
+	uint32_t charmPoints = 0;
+	uint32_t stars = 0;
+	uint32_t occurrence = 0;
+	std::string locations = "";
+};
+
 class MonsterType
 {
 	struct MonsterInfo
@@ -172,6 +187,7 @@ public:
 	std::string nameDescription;
 
 	MonsterInfo info;
+	BestiaryInfo bestiaryInfo;
 
 	void loadLoot(MonsterType* monsterType, LootBlock lootBlock);
 };
@@ -239,6 +255,7 @@ public:
 
 	std::unique_ptr<LuaScriptInterface> scriptInterface;
 	std::map<std::string, MonsterType> monsters;
+	std::unique_ptr<Bestiary> bestiary = std::make_unique<Bestiary>();
 
 private:
 	ConditionDamage* getDamageCondition(ConditionType_t conditionType, int32_t maxDamage, int32_t minDamage,

@@ -74,6 +74,7 @@ bool Monsters::reload()
 	loaded = false;
 
 	scriptInterface.reset();
+	bestiary->clear();
 
 	return loadFromXml(true);
 }
@@ -869,6 +870,10 @@ MonsterType* Monsters::loadMonster(const std::string& file, const std::string& m
 		mType->info.skull = getSkullType(boost::algorithm::to_lower_copy<std::string>(attr.as_string()));
 	}
 
+	if ((attr = monsterNode.attribute("raceId"))) {
+		mType->bestiaryInfo.raceId = attr.as_uint();
+	}
+
 	if ((attr = monsterNode.attribute("script"))) {
 		if (!scriptInterface) {
 			scriptInterface.reset(new LuaScriptInterface("Monster Interface"));
@@ -977,6 +982,42 @@ MonsterType* Monsters::loadMonster(const std::string& file, const std::string& m
 			mType->info.pushable = false;
 		}
 	}
+
+	if ((node = monsterNode.child("bestiary"))) {
+		if ((attr = node.attribute("class"))) {
+			mType->bestiaryInfo.className = attr.as_string();
+		}
+		if ((attr = node.attribute("prowess"))) {
+			mType->bestiaryInfo.prowess = pugi::cast<uint32_t>(attr.value());
+		}
+		if ((attr = node.attribute("expertise"))) {
+			mType->bestiaryInfo.expertise = pugi::cast<uint32_t>(attr.value());
+		}
+		if ((attr = node.attribute("mastery"))) {
+			mType->bestiaryInfo.mastery = pugi::cast<uint32_t>(attr.value());
+		}
+		if ((attr = node.attribute("charmPoints"))) {
+			mType->bestiaryInfo.charmPoints = pugi::cast<uint32_t>(attr.value());
+		}
+		if ((attr = node.attribute("stars"))) {
+			mType->bestiaryInfo.stars = pugi::cast<uint32_t>(attr.value());
+		}
+		if ((attr = node.attribute("occurrence"))) {
+			mType->bestiaryInfo.occurrence = pugi::cast<uint32_t>(attr.value());
+		}
+		if ((attr = node.attribute("locations"))) {
+			mType->bestiaryInfo.locations = attr.as_string();
+		}
+
+		if (!bestiary->isValid(mType->bestiaryInfo)) {
+			mType->bestiaryInfo = {};
+			std::cout << "[Warning - Monsters::loadMonster] invalid bestiary info for " << mType->name << "."
+			          << std::endl;
+		} else {
+			bestiary->addMonsterType(mType->bestiaryInfo.className, mType->bestiaryInfo.raceId, mType->name);
+		}
+	}
+
 	if (mType->info.manaCost == 0 && (mType->info.isSummonable || mType->info.isConvinceable)) {
 		std::cout
 		    << "[Warning - Monsters::loadMonster] manaCost missing or zero on monster with summonable and/or convinceable flags: "
