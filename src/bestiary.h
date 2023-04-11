@@ -23,7 +23,7 @@ public:
 
 	void addMonsterType(const std::string& className, uint16_t raceId, std::string_view monsterName);
 	MonsterType* getMonsterType(const std::string& className, uint16_t raceId) const;
-    const BestiaryMap& getBestiary() const { return bestiary; }
+	const BestiaryMap& getBestiary() const { return bestiary; }
 	size_t getMonsterCount() const { return monsterCount; }
 	bool isValid(const BestiaryInfo& bestiaryInfo) const;
 

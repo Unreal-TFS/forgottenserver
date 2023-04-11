@@ -15000,7 +15000,8 @@ int LuaScriptInterface::luaMonsterTypeBestiaryInfo(lua_State* L)
 				pushBoolean(L, false);
 			}
 		} else {
-			std::cout << "[Warning - LuaScriptInterface::luaMonsterTypeBestiaryInfo] bestiaryInfo must be a table." << std::endl;
+			std::cout << "[Warning - LuaScriptInterface::luaMonsterTypeBestiaryInfo] bestiaryInfo must be a table."
+			          << std::endl;
 			lua_pushnil(L);
 		}
 	} else {
