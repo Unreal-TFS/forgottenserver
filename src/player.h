@@ -275,10 +275,57 @@ public:
 	AccountType_t getAccountType() const { return accountType; }
 	uint32_t getLevel() const { return level; }
 	uint8_t getLevelPercent() const { return levelPercent; }
-	uint32_t getMagicLevel() const { return std::max<int32_t>(0, magLevel + varStats[STAT_MAGICPOINTS]); }
+	uint32_t getMagicLevel() const
+	{
+		int32_t totalMagicPoints = 0;
+		for (const auto& [_, stats] : statsTotal) {
+			totalMagicPoints += stats[STAT_MAGICPOINTS];
+		}
+		return std::max<int32_t>(0, magLevel + varStats[STAT_MAGICPOINTS] + totalMagicPoints);
+	}
 	uint32_t getSpecialMagicLevel(CombatType_t type) const
 	{
 		return std::max<int32_t>(0, specialMagicLevelSkill[combatTypeToIndex(type)]);
+	}
+	void setVarSkillTotal(Condition* cond, skills_t skill, int32_t modifier)
+	{
+		auto it = skillsTotal.find(cond->getSubId());
+		if (it == skillsTotal.end()) {
+			decltype(auto) arr = skillsTotal.insert({cond->getSubId(), std::array<int32_t, SKILL_LAST + 1>{0}}).first;
+			arr->second[skill] = modifier;
+		} else {
+			it->second[skill] += modifier;
+		}
+	}
+	bool removeVarSkillTotal(Condition* cond)
+	{
+		auto it = skillsTotal.find(cond->getSubId());
+		if (it != skillsTotal.end()) {
+			skillsTotal.erase(it);
+			return true;
+		}
+
+		return false;
+	}
+	void setVarStatsTotal(Condition* cond, stats_t skill, int32_t modifier)
+	{
+		auto it = statsTotal.find(cond->getSubId());
+		if (it == statsTotal.end()) {
+			decltype(auto) arr = statsTotal.insert({cond->getSubId(), std::array<int32_t, STAT_LAST + 1>{0}}).first;
+			arr->second[skill] = modifier;
+		} else {
+			it->second[skill] += modifier;
+		}
+	}
+	bool removeVarStatsTotal(Condition* cond)
+	{
+		auto it = statsTotal.find(cond->getSubId());
+		if (it != statsTotal.end()) {
+			statsTotal.erase(it);
+			return true;
+		}
+
+		return false;
 	}
 	uint32_t getBaseMagicLevel() const { return magLevel; }
 	uint16_t getMagicLevelPercent() const { return magLevelPercent; }
@@ -456,7 +503,11 @@ public:
 	uint16_t getSpecialSkill(uint8_t skill) const { return std::max<uint16_t>(0, varSpecialSkills[skill]); }
 	uint16_t getSkillLevel(uint8_t skill) const
 	{
-		return std::max<uint16_t>(0, skills[skill].level + varSkills[skill]);
+		int32_t totalSkills = 0;
+		for (const auto& [_, skills] : skillsTotal) {
+			totalSkills += skills[skill];
+		}
+		return std::max<uint16_t>(0, skills[skill].level + varSkills[skill] + totalSkills);
 	}
 	uint16_t getSpecialMagicLevelSkill(CombatType_t type) const
 	{
@@ -1254,6 +1305,8 @@ private:
 	int32_t varSkills[SKILL_LAST + 1] = {};
 	int32_t varSpecialSkills[SPECIALSKILL_LAST + 1] = {};
 	int32_t varStats[STAT_LAST + 1] = {};
+	std::map<int32_t, std::array<int32_t, SKILL_LAST + 1>> skillsTotal;
+	std::map<int32_t, std::array<int32_t, STAT_LAST + 1>> statsTotal;
 	std::array<int16_t, COMBAT_COUNT> specialMagicLevelSkill = {0};
 	int32_t purchaseCallback = -1;
 	int32_t saleCallback = -1;

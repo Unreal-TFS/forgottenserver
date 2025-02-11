@@ -45,6 +45,8 @@ enum ConditionAttr_t
 	CONDITIONATTR_SPECIALSKILLS,
 	CONDITIONATTR_MANASHIELD_BREAKABLE_MANA,
 	CONDITIONATTR_MANASHIELD_BREAKABLE_MAXMANA,
+	CONDITIONATTR_SKILLS_TOTAL,
+	CONDITIONATTR_STATS_TOTAL,
 
 	// reserved for serialization
 	CONDITIONATTR_END = 254,
@@ -162,9 +164,13 @@ private:
 	int32_t specialSkills[SPECIALSKILL_LAST + 1] = {};
 	int32_t stats[STAT_LAST + 1] = {};
 	int32_t statsPercent[STAT_LAST + 1] = {};
+	int32_t skillsTotals[SKILL_LAST + 1] = {};
+	int32_t statsTotals[STAT_LAST + 1] = {};
 	int32_t currentSkill = 0;
 	int32_t currentSpecialSkill = 0;
 	int32_t currentStat = 0;
+	int32_t currentSkillTotal = 0;
+	int32_t currentStatTotal = 0;
 
 	bool disableDefense = false;
 
@@ -172,6 +178,8 @@ private:
 	void updateStats(Player* player);
 	void updatePercentSkills(Player* player);
 	void updateSkills(Player* player);
+	void updateSkillsTotal(Player* player);
+	void updatePercentStatsTotal(Player* player);
 };
 
 class ConditionRegeneration final : public ConditionGeneric

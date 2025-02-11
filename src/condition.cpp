@@ -389,6 +389,7 @@ void ConditionAttributes::addCondition(Creature* creature, const Condition* cond
 		memcpy(skillsPercent, conditionAttrs.skillsPercent, sizeof(skillsPercent));
 		memcpy(stats, conditionAttrs.stats, sizeof(stats));
 		memcpy(statsPercent, conditionAttrs.statsPercent, sizeof(statsPercent));
+		memcpy(skillsTotals, conditionAttrs.skillsTotals, sizeof(skillsTotals));
 		disableDefense = conditionAttrs.disableDefense;
 
 		if (Player* player = creature->getPlayer()) {
@@ -396,6 +397,7 @@ void ConditionAttributes::addCondition(Creature* creature, const Condition* cond
 			updateSkills(player);
 			updatePercentStats(player);
 			updateStats(player);
+			updateSkillsTotal(player);
 		}
 	}
 }
@@ -410,6 +412,8 @@ bool ConditionAttributes::unserializeProp(ConditionAttr_t attr, PropStream& prop
 		return propStream.read<int32_t>(stats[currentStat++]);
 	} else if (attr == CONDITIONATTR_DISABLEDEFENSE) {
 		return propStream.read<bool>(disableDefense);
+	} else if (attr == CONDITIONATTR_SKILLS_TOTAL) {
+		return propStream.read<int32_t>(skillsTotals[currentSkillTotal++]);
 	}
 	return Condition::unserializeProp(attr, propStream);
 }
@@ -435,6 +439,16 @@ void ConditionAttributes::serialize(PropWriteStream& propWriteStream)
 		propWriteStream.write<uint8_t>(CONDITIONATTR_SPECIALSKILLS);
 		propWriteStream.write<int32_t>(specialSkills[i]);
 	}
+
+	for (int32_t i = SKILL_FIRST; i <= SKILL_LAST; ++i) {
+		propWriteStream.write<uint8_t>(CONDITIONATTR_SKILLS_TOTAL);
+		propWriteStream.write<int32_t>(skillsTotals[i]);
+	}
+
+	for (int32_t i = STAT_FIRST; i <= STAT_LAST; ++i) {
+		propWriteStream.write<uint8_t>(CONDITIONATTR_STATS_TOTAL);
+		propWriteStream.write<int32_t>(statsTotals[i]);
+	}
 }
 
 bool ConditionAttributes::startCondition(Creature* creature)
@@ -450,6 +464,8 @@ bool ConditionAttributes::startCondition(Creature* creature)
 		updateSkills(player);
 		updatePercentStats(player);
 		updateStats(player);
+		updateSkillsTotal(player);
+		updatePercentStatsTotal(player);
 	}
 
 	return true;
@@ -530,6 +546,45 @@ void ConditionAttributes::updateSkills(Player* player)
 	}
 }
 
+void ConditionAttributes::updateSkillsTotal(Player* player)
+{
+	bool needUpdateSkills = false;
+
+	for (int32_t i = SKILL_FIRST; i <= SKILL_LAST; ++i) {
+		if (skillsTotals[i]) {
+			needUpdateSkills = true;
+			auto skillTotal = player->getSkillLevel(static_cast<skills_t>(i));
+			auto mult = skillsTotals[i];
+			auto newSkill = static_cast<int32_t>(skillTotal * ((skillsTotals[i] - 100) / 100.f));
+			player->setVarSkillTotal(this, static_cast<skills_t>(i), newSkill);
+		}
+	}
+
+	if (needUpdateSkills) {
+		player->sendSkills();
+	}
+}
+
+void ConditionAttributes::updatePercentStatsTotal(Player* player)
+{
+	for (int32_t i = STAT_FIRST; i <= STAT_LAST; ++i) {
+		if (statsTotals[i] == 0) {
+			continue;
+		}
+
+		switch (i) {
+			case STAT_MAGICPOINTS: {
+				auto newMl = static_cast<int32_t>(player->getMagicLevel() * ((statsTotals[i] - 100) / 100.f));
+				player->setVarStatsTotal(this, static_cast<stats_t>(i), newMl);
+				break;
+			}
+
+			default:
+				break;
+		}
+	}
+}
+
 bool ConditionAttributes::executeCondition(Creature* creature, int32_t interval)
 {
 	return ConditionGeneric::executeCondition(creature, interval);
@@ -555,6 +610,10 @@ void ConditionAttributes::endCondition(Creature* creature)
 			}
 		}
 
+		if (player->removeVarSkillTotal(this)) {
+			needUpdateSkills = true;
+		}
+
 		if (needUpdateSkills) {
 			player->sendSkills();
 		}
@@ -566,6 +625,10 @@ void ConditionAttributes::endCondition(Creature* creature)
 				needUpdateStats = true;
 				player->setVarStats(static_cast<stats_t>(i), -stats[i]);
 			}
+		}
+
+		if (player->removeVarStatTotal(this)) {
+			needUpdateStats = true;
 		}
 
 		if (needUpdateStats) {
@@ -735,6 +798,53 @@ bool ConditionAttributes::setParam(ConditionParam_t param, int32_t value)
 
 		case CONDITION_PARAM_AGGRESSIVE: {
 			aggressive = (value != 0);
+			return true;
+		}
+
+		case CONDITION_PARAM_SKILL_MELEEPERCENT_TOTAL: {
+			skillsTotals[SKILL_CLUB] = value;
+			skillsTotals[SKILL_AXE] = value;
+			skillsTotals[SKILL_SWORD] = value;
+			return true;
+		}
+
+		case CONDITION_PARAM_SKILL_FISTPERCENT_TOTAL: {
+			skillsTotals[SKILL_FIST] = value;
+			return true;
+		}
+
+		case CONDITION_PARAM_SKILL_CLUBPERCENT_TOTAL: {
+			skillsTotals[SKILL_CLUB] = value;
+			return true;
+		}
+
+		case CONDITION_PARAM_SKILL_SWORDPERCENT_TOTAL: {
+			skillsTotals[SKILL_SWORD] = value;
+			return true;
+		}
+
+		case CONDITION_PARAM_SKILL_AXEPERCENT_TOTAL: {
+			skillsTotals[SKILL_AXE] = value;
+			return true;
+		}
+
+		case CONDITION_PARAM_SKILL_DISTANCEPERCENT_TOTAL: {
+			skillsTotals[SKILL_DISTANCE] = value;
+			return true;
+		}
+
+		case CONDITION_PARAM_SKILL_SHIELDPERCENT_TOTAL: {
+			skillsTotals[SKILL_SHIELD] = value;
+			return true;
+		}
+
+		case CONDITION_PARAM_SKILL_FISHINGPERCENT_TOTAL: {
+			skillsTotals[SKILL_FISHING] = value;
+			return true;
+		}
+
+		case CONDITION_PARAM_STAT_MAGICPOINTSPERCENT_TOTAL: {
+			statsTotals[STAT_MAGICPOINTS] = value;
 			return true;
 		}
 
